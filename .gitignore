@@ -14,3 +14,11 @@ backend/.venv/
 # Tooling
 .pytest_cache/
 .mypy_cache/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Test scripts
+test_*.py
