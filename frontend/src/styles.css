@@ -128,6 +128,28 @@ button:disabled {
   gap: 10px;
 }
 
+.task-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  margin-top: 0;
+  background: #efdfcd;
+  color: #4f3d2a;
+  border: 1px solid #d4b897;
+  padding: 7px 10px;
+  font-size: 0.82rem;
+  border-radius: 999px;
+}
+
+.chip.active {
+  background: linear-gradient(120deg, #b54a13, #df7b2d);
+  color: #fff;
+  border-color: transparent;
+}
+
 .task {
   border: 1px solid #e3cfb8;
   border-radius: 12px;

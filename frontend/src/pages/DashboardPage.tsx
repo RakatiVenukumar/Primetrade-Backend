@@ -29,6 +29,7 @@ type DashboardPageProps = {
 }
 
 type StatusTone = 'info' | 'success' | 'error'
+type FilterMode = 'all' | 'open' | 'done'
 
 export function DashboardPage({ apiBase, session, onLogout }: DashboardPageProps) {
   const navigate = useNavigate()
@@ -39,6 +40,16 @@ export function DashboardPage({ apiBase, session, onLogout }: DashboardPageProps
   const [statusTone, setStatusTone] = useState<StatusTone>('info')
   const [busyTaskId, setBusyTaskId] = useState<number | null>(null)
   const [isCreating, setIsCreating] = useState(false)
+  const [filter, setFilter] = useState<FilterMode>('all')
+
+  const totalCount = tasks.length
+  const doneCount = tasks.filter((task) => task.completed).length
+  const openCount = totalCount - doneCount
+  const visibleTasks = tasks.filter((task) => {
+    if (filter === 'open') return !task.completed
+    if (filter === 'done') return task.completed
+    return true
+  })
 
   function handleSessionExpired() {
     clearSession()
@@ -215,7 +226,31 @@ export function DashboardPage({ apiBase, session, onLogout }: DashboardPageProps
         </form>
 
         <ul className="task-list">
-          {tasks.map((task) => (
+          <li className="task-filters">
+            <button
+              type="button"
+              className={filter === 'all' ? 'chip active' : 'chip'}
+              onClick={() => setFilter('all')}
+            >
+              All ({totalCount})
+            </button>
+            <button
+              type="button"
+              className={filter === 'open' ? 'chip active' : 'chip'}
+              onClick={() => setFilter('open')}
+            >
+              Open ({openCount})
+            </button>
+            <button
+              type="button"
+              className={filter === 'done' ? 'chip active' : 'chip'}
+              onClick={() => setFilter('done')}
+            >
+              Done ({doneCount})
+            </button>
+          </li>
+
+          {visibleTasks.map((task) => (
             <li key={task.id} className={task.completed ? 'task done' : 'task'}>
               <div>
                 <p className="task-title">{task.title}</p>
@@ -239,7 +274,13 @@ export function DashboardPage({ apiBase, session, onLogout }: DashboardPageProps
               </div>
             </li>
           ))}
-          {tasks.length === 0 ? <li className="task-empty">No tasks yet. Add your first task above.</li> : null}
+          {visibleTasks.length === 0 ? (
+            <li className="task-empty">
+              {tasks.length === 0
+                ? 'No tasks yet. Add your first task above.'
+                : 'No tasks match this filter.'}
+            </li>
+          ) : null}
         </ul>
 
         <div className="actions">
