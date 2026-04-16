@@ -10,6 +10,7 @@ from app.core.config import (
     get_db_info,
     DATABASE_URL,
 )
+from app.models import User
 
 __all__ = [
     "engine",
@@ -18,4 +19,5 @@ __all__ = [
     "get_db",
     "get_db_info",
     "DATABASE_URL",
+    "User",
 ]
