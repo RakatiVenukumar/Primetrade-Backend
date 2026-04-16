@@ -1,6 +1,6 @@
 """
 Database configuration and connection management.
-Supports PostgreSQL (primary) and SQLite (fallback).
+Defaults to SQLite for local development and supports PostgreSQL when configured.
 """
 
 import os
@@ -14,7 +14,7 @@ from sqlalchemy.orm import sessionmaker, Session
 # ============================================================================
 
 DATABASE_URL: Optional[str] = os.getenv("DATABASE_URL")
-USE_SQLITE: bool = os.getenv("USE_SQLITE", "false").lower() in ["true", "1", "yes"]
+USE_SQLITE: bool = os.getenv("USE_SQLITE", "true").lower() in ["true", "1", "yes"]
 
 # ============================================================================
 # Default Credentials (for development only; use .env in production)
