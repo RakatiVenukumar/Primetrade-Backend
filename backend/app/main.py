@@ -4,11 +4,37 @@ from fastapi.responses import JSONResponse
 from app.core import Base, engine, get_db_info
 from app.routes import auth_router, admin_router, tasks_router
 
+openapi_tags = [
+    {
+        "name": "Health",
+        "description": "Service health and readiness endpoints.",
+    },
+    {
+        "name": "Authentication",
+        "description": "User registration, login, and current user profile endpoints.",
+    },
+    {
+        "name": "Admin",
+        "description": "Admin-only user management and role control endpoints.",
+    },
+    {
+        "name": "Tasks",
+        "description": "Authenticated task CRUD endpoints with per-user ownership isolation.",
+    },
+]
+
 # Initialize FastAPI app
 app = FastAPI(
     title="PrimeTrade Backend API",
-    description="Scalable backend with authentication, role-based access, and CRUD APIs",
+    description=(
+        "Scalable backend with JWT authentication, role-based access control, "
+        "task CRUD operations, and standardized error responses."
+    ),
     version="1.0.0",
+    openapi_tags=openapi_tags,
+    contact={
+        "name": "PrimeTrade API Support",
+    },
 )
 
 # ============================================================================
@@ -96,13 +122,23 @@ def startup_event():
 # Versioned Health Routes
 # ============================================================================
 
-@app.get("/api/v1", tags=["Health"])
+@app.get(
+    "/api/v1",
+    tags=["Health"],
+    summary="API root",
+    description="Versioned API root endpoint used for quick service checks.",
+)
 def read_root() -> dict:
     """Versioned root endpoint for health check."""
     return {"message": "PrimeTrade backend is running"}
 
 
-@app.get("/api/v1/health", tags=["Health"])
+@app.get(
+    "/api/v1/health",
+    tags=["Health"],
+    summary="Health check",
+    description="Returns backend health status and active database configuration.",
+)
 def health_check() -> dict:
     """Versioned health check endpoint with database info."""
     return {
