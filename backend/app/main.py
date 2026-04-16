@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from app.core import Base, engine, get_db_info
-from app.routes import auth_router, admin_router
+from app.routes import auth_router, admin_router, tasks_router
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -15,6 +15,7 @@ app = FastAPI(
 
 app.include_router(auth_router)
 app.include_router(admin_router)
+app.include_router(tasks_router)
 
 
 # ============================================================================
