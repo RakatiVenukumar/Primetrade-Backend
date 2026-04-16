@@ -101,6 +101,55 @@ button:disabled {
   justify-content: flex-end;
 }
 
+.task-form {
+  margin-top: 18px;
+}
+
+.task-list {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.task {
+  border: 1px solid #e3cfb8;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.task.done {
+  background: #f2f5f0;
+}
+
+.task-title {
+  margin: 0;
+  font-weight: 700;
+}
+
+.task-desc {
+  margin: 4px 0 0;
+  font-size: 0.92rem;
+  color: #5f4d3a;
+}
+
+.task-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.task-actions button {
+  padding: 8px 10px;
+  margin-top: 0;
+  font-size: 0.85rem;
+}
+
 @keyframes rise {
   from {
     transform: translateY(8px);
