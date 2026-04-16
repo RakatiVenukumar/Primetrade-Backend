@@ -82,12 +82,23 @@ button {
   cursor: pointer;
 }
 
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .panel {
   margin-top: 16px;
   border-radius: 12px;
   padding: 12px;
   background: #fff7ed;
   border: 1px dashed #d9b48b;
+}
+
+.actions {
+  margin-top: 18px;
+  display: flex;
+  justify-content: flex-end;
 }
 
 @keyframes rise {
