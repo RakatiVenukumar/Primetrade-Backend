@@ -95,6 +95,21 @@ button:disabled {
   border: 1px dashed #d9b48b;
 }
 
+.status.info {
+  border-color: #d9b48b;
+  background: #fff7ed;
+}
+
+.status.success {
+  border-color: #8bbf96;
+  background: #effaf1;
+}
+
+.status.error {
+  border-color: #d79999;
+  background: #fff0f0;
+}
+
 .actions {
   margin-top: 18px;
   display: flex;
@@ -148,6 +163,14 @@ button:disabled {
   padding: 8px 10px;
   margin-top: 0;
   font-size: 0.85rem;
+}
+
+.task-empty {
+  border: 1px dashed #d9b48b;
+  border-radius: 12px;
+  padding: 12px;
+  color: #7f664b;
+  background: #fffaf3;
 }
 
 @keyframes rise {

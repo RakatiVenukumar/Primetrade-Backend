@@ -27,12 +27,15 @@ type DashboardPageProps = {
   onLogout: () => void
 }
 
+type StatusTone = 'info' | 'success' | 'error'
+
 export function DashboardPage({ apiBase, session, onLogout }: DashboardPageProps) {
   const navigate = useNavigate()
   const [tasks, setTasks] = useState<Task[]>([])
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [status, setStatus] = useState('Loading tasks...')
+  const [statusTone, setStatusTone] = useState<StatusTone>('info')
   const [busyTaskId, setBusyTaskId] = useState<number | null>(null)
   const [isCreating, setIsCreating] = useState(false)
 
@@ -44,6 +47,12 @@ export function DashboardPage({ apiBase, session, onLogout }: DashboardPageProps
     [session.token]
   )
 
+  function handleSessionExpired() {
+    clearSession()
+    onLogout()
+    navigate('/login', { replace: true })
+  }
+
   async function loadTasks() {
     try {
       const response = await fetch(`${apiBase}/tasks?limit=50&offset=0`, {
@@ -52,17 +61,27 @@ export function DashboardPage({ apiBase, session, onLogout }: DashboardPageProps
         },
       })
 
+      if (response.status === 401) {
+        setStatus('Session expired. Please login again.')
+        setStatusTone('error')
+        handleSessionExpired()
+        return
+      }
+
       if (!response.ok) {
         const body = await response.json().catch(() => ({}))
         setStatus(`Failed to load tasks: ${body?.error?.message ?? 'unknown error'}`)
+        setStatusTone('error')
         return
       }
 
       const data = (await response.json()) as TaskListResponse
       setTasks(data.tasks)
       setStatus(data.tasks.length ? `Loaded ${data.total} task(s)` : 'No tasks yet')
+      setStatusTone('success')
     } catch {
       setStatus('Network error while loading tasks')
+      setStatusTone('error')
     }
   }
 
@@ -76,6 +95,7 @@ export function DashboardPage({ apiBase, session, onLogout }: DashboardPageProps
 
     setIsCreating(true)
     setStatus('Creating task...')
+    setStatusTone('info')
 
     try {
       const response = await fetch(`${apiBase}/tasks`, {
@@ -90,6 +110,7 @@ export function DashboardPage({ apiBase, session, onLogout }: DashboardPageProps
       if (!response.ok) {
         const body = await response.json().catch(() => ({}))
         setStatus(`Create failed: ${body?.error?.message ?? 'unknown error'}`)
+        setStatusTone('error')
         return
       }
 
@@ -98,6 +119,7 @@ export function DashboardPage({ apiBase, session, onLogout }: DashboardPageProps
       await loadTasks()
     } catch {
       setStatus('Network error while creating task')
+      setStatusTone('error')
     } finally {
       setIsCreating(false)
     }
@@ -106,6 +128,7 @@ export function DashboardPage({ apiBase, session, onLogout }: DashboardPageProps
   async function handleToggleTask(task: Task) {
     setBusyTaskId(task.id)
     setStatus(`Updating task #${task.id}...`)
+    setStatusTone('info')
 
     try {
       const response = await fetch(`${apiBase}/tasks/${task.id}`, {
@@ -117,12 +140,14 @@ export function DashboardPage({ apiBase, session, onLogout }: DashboardPageProps
       if (!response.ok) {
         const body = await response.json().catch(() => ({}))
         setStatus(`Update failed: ${body?.error?.message ?? 'unknown error'}`)
+        setStatusTone('error')
         return
       }
 
       await loadTasks()
     } catch {
       setStatus('Network error while updating task')
+      setStatusTone('error')
     } finally {
       setBusyTaskId(null)
     }
@@ -131,6 +156,7 @@ export function DashboardPage({ apiBase, session, onLogout }: DashboardPageProps
   async function handleDeleteTask(taskId: number) {
     setBusyTaskId(taskId)
     setStatus(`Deleting task #${taskId}...`)
+    setStatusTone('info')
 
     try {
       const response = await fetch(`${apiBase}/tasks/${taskId}`, {
@@ -143,21 +169,17 @@ export function DashboardPage({ apiBase, session, onLogout }: DashboardPageProps
       if (!response.ok && response.status !== 204) {
         const body = await response.json().catch(() => ({}))
         setStatus(`Delete failed: ${body?.error?.message ?? 'unknown error'}`)
+        setStatusTone('error')
         return
       }
 
       await loadTasks()
     } catch {
       setStatus('Network error while deleting task')
+      setStatusTone('error')
     } finally {
       setBusyTaskId(null)
     }
-  }
-
-  function handleLogout() {
-    clearSession()
-    onLogout()
-    navigate('/login', { replace: true })
   }
 
   return (
@@ -167,7 +189,7 @@ export function DashboardPage({ apiBase, session, onLogout }: DashboardPageProps
         <h1>Welcome, {session.user.email}</h1>
         <p className="subtext">Role: {session.user.role}</p>
 
-        <div className="panel">
+        <div className={`panel status ${statusTone}`}>
           <p><strong>User ID:</strong> {session.user.id}</p>
           <p><strong>API:</strong> {apiBase}</p>
           <p><strong>Access Token:</strong> {session.token.slice(0, 24)}...</p>
@@ -222,10 +244,11 @@ export function DashboardPage({ apiBase, session, onLogout }: DashboardPageProps
               </div>
             </li>
           ))}
+          {tasks.length === 0 ? <li className="task-empty">No tasks yet. Add your first task above.</li> : null}
         </ul>
 
         <div className="actions">
-          <button type="button" onClick={handleLogout}>Logout</button>
+          <button type="button" onClick={handleSessionExpired}>Logout</button>
         </div>
       </section>
     </main>

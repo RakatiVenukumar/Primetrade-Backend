@@ -19,11 +19,14 @@ type LoginPageProps = {
   onLogin: (session: SessionData) => void
 }
 
+type StatusTone = 'info' | 'success' | 'error'
+
 export function LoginPage({ apiBase, onLogin }: LoginPageProps) {
   const navigate = useNavigate()
   const [email, setEmail] = useState('step8user@example.com')
   const [password, setPassword] = useState('Step8Pass123')
   const [status, setStatus] = useState('Ready')
+  const [statusTone, setStatusTone] = useState<StatusTone>('info')
   const [tokenPreview, setTokenPreview] = useState('No token yet')
 
   const canSubmit = useMemo(() => email.length > 0 && password.length > 0, [email, password])
@@ -31,6 +34,7 @@ export function LoginPage({ apiBase, onLogin }: LoginPageProps) {
   async function handleLogin(event: FormEvent) {
     event.preventDefault()
     setStatus('Authenticating...')
+    setStatusTone('info')
 
     try {
       const response = await fetch(`${apiBase}/auth/login`, {
@@ -42,6 +46,7 @@ export function LoginPage({ apiBase, onLogin }: LoginPageProps) {
       if (!response.ok) {
         const body = await response.json().catch(() => ({}))
         setStatus(`Login failed: ${body?.error?.message ?? 'unknown error'}`)
+        setStatusTone('error')
         return
       }
 
@@ -51,9 +56,11 @@ export function LoginPage({ apiBase, onLogin }: LoginPageProps) {
       onLogin(session)
       setTokenPreview(`${data.access_token.slice(0, 24)}...`)
       setStatus(`Logged in as ${data.user.email} (${data.user.role})`)
+      setStatusTone('success')
       navigate('/dashboard', { replace: true })
     } catch {
       setStatus('Network error while calling backend API')
+      setStatusTone('error')
     }
   }
 
@@ -78,7 +85,7 @@ export function LoginPage({ apiBase, onLogin }: LoginPageProps) {
           <button type="submit" disabled={!canSubmit}>Login</button>
         </form>
 
-        <div className="panel">
+        <div className={`panel status ${statusTone}`}>
           <p><strong>API:</strong> {apiBase}</p>
           <p><strong>Status:</strong> {status}</p>
           <p><strong>Token:</strong> {tokenPreview}</p>
