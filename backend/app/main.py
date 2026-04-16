@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from app.core import Base, engine, get_db_info
+from app.routes import auth_router
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -7,6 +8,12 @@ app = FastAPI(
     description="Scalable backend with authentication, role-based access, and CRUD APIs",
     version="1.0.0",
 )
+
+# ============================================================================
+# Include Routers
+# ============================================================================
+
+app.include_router(auth_router)
 
 
 # ============================================================================
