@@ -93,18 +93,18 @@ def startup_event():
 
 
 # ============================================================================
-# Health Check Route
+# Versioned Health Routes
 # ============================================================================
 
-@app.get("/", tags=["Health"])
+@app.get("/api/v1", tags=["Health"])
 def read_root() -> dict:
-    """Root endpoint for health check."""
+    """Versioned root endpoint for health check."""
     return {"message": "PrimeTrade backend is running"}
 
 
-@app.get("/health", tags=["Health"])
+@app.get("/api/v1/health", tags=["Health"])
 def health_check() -> dict:
-    """Health check endpoint with database info."""
+    """Versioned health check endpoint with database info."""
     return {
         "status": "healthy",
         "database": get_db_info(),
