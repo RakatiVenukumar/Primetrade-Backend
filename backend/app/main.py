@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from app.core import Base, engine, get_db_info
-from app.routes import auth_router
+from app.routes import auth_router, admin_router
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -14,6 +14,7 @@ app = FastAPI(
 # ============================================================================
 
 app.include_router(auth_router)
+app.include_router(admin_router)
 
 
 # ============================================================================
@@ -28,7 +29,7 @@ def startup_event():
     """
     Base.metadata.create_all(bind=engine)
     db_info = get_db_info()
-    print(f"✓ Database initialized: {db_info}")
+    print(f"[OK] Database initialized: {db_info}")
 
 
 # ============================================================================
