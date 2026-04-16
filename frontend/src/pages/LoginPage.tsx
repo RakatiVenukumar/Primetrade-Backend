@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { saveSession } from '../lib/auth'
 import type { SessionData } from '../lib/auth'
+import { ApiError, apiRequest } from '../lib/api'
 
 type LoginResponse = {
   access_token: string
@@ -37,20 +38,10 @@ export function LoginPage({ apiBase, onLogin }: LoginPageProps) {
     setStatusTone('info')
 
     try {
-      const response = await fetch(`${apiBase}/auth/login`, {
+      const data = await apiRequest<LoginResponse>(`${apiBase}/auth/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       })
-
-      if (!response.ok) {
-        const body = await response.json().catch(() => ({}))
-        setStatus(`Login failed: ${body?.error?.message ?? 'unknown error'}`)
-        setStatusTone('error')
-        return
-      }
-
-      const data = (await response.json()) as LoginResponse
       const session = { token: data.access_token, user: data.user }
       saveSession(session)
       onLogin(session)
@@ -58,8 +49,12 @@ export function LoginPage({ apiBase, onLogin }: LoginPageProps) {
       setStatus(`Logged in as ${data.user.email} (${data.user.role})`)
       setStatusTone('success')
       navigate('/dashboard', { replace: true })
-    } catch {
-      setStatus('Network error while calling backend API')
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setStatus(`Login failed: ${error.message}`)
+      } else {
+        setStatus('Network error while calling backend API')
+      }
       setStatusTone('error')
     }
   }

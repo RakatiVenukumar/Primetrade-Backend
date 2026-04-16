@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { SessionData } from '../lib/auth'
 import { clearSession } from '../lib/auth'
+import { ApiError, apiRequest, apiRequestNoContent } from '../lib/api'
 
 type Task = {
   id: number
@@ -39,14 +40,6 @@ export function DashboardPage({ apiBase, session, onLogout }: DashboardPageProps
   const [busyTaskId, setBusyTaskId] = useState<number | null>(null)
   const [isCreating, setIsCreating] = useState(false)
 
-  const authHeaders = useMemo(
-    () => ({
-      Authorization: `Bearer ${session.token}`,
-      'Content-Type': 'application/json',
-    }),
-    [session.token]
-  )
-
   function handleSessionExpired() {
     clearSession()
     onLogout()
@@ -55,32 +48,27 @@ export function DashboardPage({ apiBase, session, onLogout }: DashboardPageProps
 
   async function loadTasks() {
     try {
-      const response = await fetch(`${apiBase}/tasks?limit=50&offset=0`, {
-        headers: {
-          Authorization: `Bearer ${session.token}`,
-        },
-      })
-
-      if (response.status === 401) {
+      const data = await apiRequest<TaskListResponse>(
+        `${apiBase}/tasks?limit=50&offset=0`,
+        {},
+        session.token
+      )
+      setTasks(data.tasks)
+      setStatus(data.tasks.length ? `Loaded ${data.total} task(s)` : 'No tasks yet')
+      setStatusTone('success')
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
         setStatus('Session expired. Please login again.')
         setStatusTone('error')
         handleSessionExpired()
         return
       }
 
-      if (!response.ok) {
-        const body = await response.json().catch(() => ({}))
-        setStatus(`Failed to load tasks: ${body?.error?.message ?? 'unknown error'}`)
-        setStatusTone('error')
-        return
+      if (error instanceof ApiError) {
+        setStatus(`Failed to load tasks: ${error.message}`)
+      } else {
+        setStatus('Network error while loading tasks')
       }
-
-      const data = (await response.json()) as TaskListResponse
-      setTasks(data.tasks)
-      setStatus(data.tasks.length ? `Loaded ${data.total} task(s)` : 'No tasks yet')
-      setStatusTone('success')
-    } catch {
-      setStatus('Network error while loading tasks')
       setStatusTone('error')
     }
   }
@@ -98,27 +86,30 @@ export function DashboardPage({ apiBase, session, onLogout }: DashboardPageProps
     setStatusTone('info')
 
     try {
-      const response = await fetch(`${apiBase}/tasks`, {
+      await apiRequest<Task>(`${apiBase}/tasks`, {
         method: 'POST',
-        headers: authHeaders,
         body: JSON.stringify({
           title: title.trim(),
           description: description.trim() ? description.trim() : null,
         }),
-      })
-
-      if (!response.ok) {
-        const body = await response.json().catch(() => ({}))
-        setStatus(`Create failed: ${body?.error?.message ?? 'unknown error'}`)
-        setStatusTone('error')
-        return
-      }
+      }, session.token)
 
       setTitle('')
       setDescription('')
       await loadTasks()
-    } catch {
-      setStatus('Network error while creating task')
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        setStatus('Session expired. Please login again.')
+        setStatusTone('error')
+        handleSessionExpired()
+        return
+      }
+
+      if (error instanceof ApiError) {
+        setStatus(`Create failed: ${error.message}`)
+      } else {
+        setStatus('Network error while creating task')
+      }
       setStatusTone('error')
     } finally {
       setIsCreating(false)
@@ -131,22 +122,25 @@ export function DashboardPage({ apiBase, session, onLogout }: DashboardPageProps
     setStatusTone('info')
 
     try {
-      const response = await fetch(`${apiBase}/tasks/${task.id}`, {
+      await apiRequest<Task>(`${apiBase}/tasks/${task.id}`, {
         method: 'PUT',
-        headers: authHeaders,
         body: JSON.stringify({ completed: !task.completed }),
-      })
+      }, session.token)
 
-      if (!response.ok) {
-        const body = await response.json().catch(() => ({}))
-        setStatus(`Update failed: ${body?.error?.message ?? 'unknown error'}`)
+      await loadTasks()
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        setStatus('Session expired. Please login again.')
         setStatusTone('error')
+        handleSessionExpired()
         return
       }
 
-      await loadTasks()
-    } catch {
-      setStatus('Network error while updating task')
+      if (error instanceof ApiError) {
+        setStatus(`Update failed: ${error.message}`)
+      } else {
+        setStatus('Network error while updating task')
+      }
       setStatusTone('error')
     } finally {
       setBusyTaskId(null)
@@ -159,23 +153,24 @@ export function DashboardPage({ apiBase, session, onLogout }: DashboardPageProps
     setStatusTone('info')
 
     try {
-      const response = await fetch(`${apiBase}/tasks/${taskId}`, {
+      await apiRequestNoContent(`${apiBase}/tasks/${taskId}`, {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${session.token}`,
-        },
-      })
+      }, session.token)
 
-      if (!response.ok && response.status !== 204) {
-        const body = await response.json().catch(() => ({}))
-        setStatus(`Delete failed: ${body?.error?.message ?? 'unknown error'}`)
+      await loadTasks()
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        setStatus('Session expired. Please login again.')
         setStatusTone('error')
+        handleSessionExpired()
         return
       }
 
-      await loadTasks()
-    } catch {
-      setStatus('Network error while deleting task')
+      if (error instanceof ApiError) {
+        setStatus(`Delete failed: ${error.message}`)
+      } else {
+        setStatus('Network error while deleting task')
+      }
       setStatusTone('error')
     } finally {
       setBusyTaskId(null)
