@@ -10,6 +10,7 @@ from app.core import get_db
 from app.models import User
 from app.schemas import UserCreate, UserLogin, UserResponse, TokenResponse
 from app.utils import hash_password, verify_password, create_access_token
+from app.core.dependencies import get_current_user
 
 # ============================================================================
 # Router Setup
@@ -152,3 +153,28 @@ def login(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate authentication token"
         )
+
+
+# ============================================================================
+# Protected Routes (require authentication)
+# ============================================================================
+
+@router.get(
+    "/me",
+    response_model=UserResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get current user profile",
+    description="Get the authenticated user's profile using JWT token"
+)
+def get_profile(
+    current_user: UserResponse = Depends(get_current_user)
+) -> UserResponse:
+    """
+    Get the current authenticated user's profile.
+
+    Requires valid JWT token in Authorization header.
+
+    Returns:
+    - Current user information
+    """
+    return current_user
